@@ -4,21 +4,20 @@ package Lesson6;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class Main {
+public class Client {
+    final static String SERVER_ADDR = "localhost";
+    final static int SERVER_PORT = 8189;
 
     public static void main(String[] args) throws IOException {
         Socket socket = null;
         Scanner sc = new Scanner(System.in);
-        final int PORT = 8189;
-        ServerSocket server = new ServerSocket(PORT);
         try {
-            System.out.println("Сервер запущен");
-            socket = server.accept();  //создается клиентский сокет и ссылка передается в socket
-            System.out.println("Клиент подключился" + socket.getRemoteSocketAddress());
+            socket = new Socket(SERVER_ADDR, SERVER_PORT);
+            System.out.println("Вы подключились к серверу " + socket.getRemoteSocketAddress());
             DataInputStream in = new DataInputStream(socket.getInputStream());
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
@@ -26,7 +25,6 @@ public class Main {
             Thread readThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-
                     while (true) {
                         try {
                             out.writeUTF(sc.nextLine());
@@ -34,7 +32,6 @@ public class Main {
                             e.printStackTrace();
                         }
                     }
-
                 }
             });
             readThread.setDaemon(true);
@@ -43,19 +40,20 @@ public class Main {
             while (true) {
                 String str = in.readUTF();
                 if (str.equals("/end")) {
-                    System.out.println("Клиент отключился");
+                    System.out.println("Потеряно соединение с сервером");
                     out.writeUTF("/end");
                     break;
-                }else{
-                    System.out.println("Клиент: " + str);
+                } else {
+                    System.out.println("Сервер: " + str);
                 }
             }
-        }catch (IOException e) {
+
+        } catch (IOException e) {
             e.printStackTrace();
-        }finally {
-            try {
+        } finally {
+            try{
                 socket.close();
-            }catch (IOException | NullPointerException e){
+            } catch (IOException | NullPointerException e) {
                 e.printStackTrace();
             }
         }
